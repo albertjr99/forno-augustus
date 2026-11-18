@@ -259,3 +259,12 @@ svg.i.flip{transform:rotate(180deg)}
 .soldout{display:inline-block;margin-top:4px;font-size:12px;font-weight:800;color:#6B6B6B;background:#E4E0DA;border-radius:8px;padding:3px 8px}
 .left{display:inline-block;margin-top:4px;font-size:12px;font-weight:800;color:var(--paid);background:var(--paidbg);border-radius:8px;padding:3px 8px}
 .step button[disabled]{opacity:.35}
+
+/* ---------- senha do cadeado ---------- */
+.lockcode{display:flex;gap:6px;margin-top:6px}
+.lockcode span{width:38px;height:48px;border-radius:10px;background:var(--oven);color:#FFF3DC;display:grid;place-items:center;font-family:Display,Georgia,serif;font-weight:700;font-size:28px;font-variant-numeric:lining-nums tabular-nums}
+.lockcode.big{justify-content:center;gap:10px;margin-top:10px}
+.lockcode.big span{width:58px;height:72px;font-size:44px;border-radius:14px;box-shadow:0 8px 20px -10px rgba(43,18,8,.6)}
+.lockcard{cursor:pointer}
+.lockwarn{display:flex;gap:10px;align-items:flex-start;margin-top:12px;background:#FFF1D6;color:#7A4E00;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600}
+.lockwarn svg.i{width:18px;height:18px;flex:none;margin-top:1px}

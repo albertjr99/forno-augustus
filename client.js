@@ -5,7 +5,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = n => (Math.round((n || 0) * 100) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pad = n => String(n).padStart(2, '0');
-const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+// Horário de São Paulo (UTC-3)
+const today = () => { const d = new Date(Date.now() - 3 * 36e5); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 const first = n => (n || '').trim().split(/\s+/)[0] || '';
 const noAccent = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -18,7 +19,7 @@ const P = {
 const ic = n => '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 
 let catalog = null, stock = null, fs = null, auth = null, ready = false;
-const st = { step: 'vitrine', cart: {}, name: '', phone: '', last: null, sending: false };
+const st = { step: 'vitrine', cart: {}, name: '', phone: '', last: null, sending: false, code: '' };
 try { st.name = localStorage.getItem('fa_cli_name') || ''; st.phone = localStorage.getItem('fa_cli_phone') || ''; } catch (e) {}
 
 const products = () => (catalog && catalog.products) || [];
@@ -83,6 +84,8 @@ function render() {
     const l = st.last || {};
     h += '<div class="cok"><div class="cok-ic">' + ic('check') + '</div><div class="ctitle" style="text-align:center">Obrigada, ' + esc(first(l.customer)) + '!</div>' +
       '<div class="csub" style="text-align:center">' + (l.status === 'pago' ? 'Seu pagamento de ' + money(l.total) + ' foi informado à Talita.' : 'Anotamos ' + money(l.total) + ' no seu nome. Quando puder, pague pelo Pix da plaquinha.') + '</div></div>' +
+      (st.code ? '<div class="card" style="text-align:center"><div class="hint" style="font-weight:800;letter-spacing:.06em">SENHA DO CADEADO</div><div class="lockcode big">' + st.code.split('').map(d => '<span>' + esc(d) + '</span>').join('') + '</div>' +
+        '<div class="muted" style="font-size:14px;margin-top:10px">Gire os números para abrir a caixa, pegue o que você marcou e embaralhe os números ao fechar.</div></div>' : '') +
       '<button class="btn btn-line btn-block" data-a="again">Registrar outra compra</button></div>';
   }
   $('#app').innerHTML = h;
@@ -103,11 +106,15 @@ function send(status) {
   const sale = { id: uid(), date: k, ts: Date.now(), customer: st.name, phone: st.phone, items, total: Math.round(itemsTotal(items) * 100) / 100,
     status, paidAt: status === 'pago' ? k : null, by: 'Cliente (QR)', source: 'cliente', selfReported: status === 'pago' };
   st.sending = true; render();
-  const go = () => FB.setDoc(FB.doc(fs, 'sales', sale.id), sale).then(() => {
+  const go = () => { const b = FB.writeBatch(fs); const uidv = auth.currentUser.uid;
+    b.set(FB.doc(fs, 'sales', sale.id), sale);
+    b.set(FB.doc(fs, 'access', uidv + '_' + k), { date: k, saleId: sale.id, uid: uidv, ts: Date.now() });
+    return b.commit(); };
+  const run = () => go().then(() => FB.getDoc(FB.doc(fs, 'locks', k)).then(d => { st.code = d.exists() ? (d.data().code || '') : ''; }).catch(() => { st.code = ''; })).then(() => {
     if (stock && stock.date === k) { const upd = {}; Object.keys(items).forEach(id => { upd['sold.' + id] = FB.increment(items[id]); }); FB.updateDoc(FB.doc(fs, 'public', 'stock'), upd).catch(() => {}); }
     st.sending = false; st.last = sale; st.cart = {}; st.step = 'ok'; render(); scrollTo(0, 0);
   }).catch(e => { st.sending = false; render(); toast('Não foi possível enviar. Confira a internet e tente de novo.'); console.error(e); });
-  if (auth.currentUser) go(); else FB.signInAnonymously(auth).then(go).catch(e => { st.sending = false; render(); toast('Sem conexão. Tente de novo.'); console.error(e); });
+  if (auth.currentUser) run(); else FB.signInAnonymously(auth).then(run).catch(e => { st.sending = false; render(); toast('Sem conexão. Tente de novo.'); console.error(e); });
 }
 const A = {
   inc(d) { const av = availability(); if (av && (st.cart[d.id] || 0) >= av[d.id]) { toast('Só restam ' + av[d.id]); return; } st.cart[d.id] = (st.cart[d.id] || 0) + 1; render(); },
