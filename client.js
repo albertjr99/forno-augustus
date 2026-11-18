@@ -17,7 +17,7 @@ const P = {
 };
 const ic = n => '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + P[n] + '</svg>';
 
-let catalog = null, fs = null, auth = null, ready = false;
+let catalog = null, stock = null, fs = null, auth = null, ready = false;
 const st = { step: 'vitrine', cart: {}, name: '', phone: '', last: null, sending: false };
 try { st.name = localStorage.getItem('fa_cli_name') || ''; st.phone = localStorage.getItem('fa_cli_phone') || ''; } catch (e) {}
 
@@ -25,6 +25,12 @@ const products = () => (catalog && catalog.products) || [];
 const prod = id => products().find(p => p.id === id);
 const itemsTotal = it => Object.keys(it).reduce((s, id) => s + (prod(id) ? prod(id).price * it[id] : 0), 0);
 const itemsQty = it => Object.values(it).reduce((s, q) => s + q, 0);
+function availability() {
+  if (!stock || stock.date !== today()) return null;
+  const taken = stock.taken || {}; if (!itemsQty(taken)) return null;
+  const av = {}; products().forEach(p => { av[p.id] = Math.max(0, (taken[p.id] || 0) - ((stock.sold || {})[p.id] || 0) - ((stock.returned || {})[p.id] || 0)); });
+  return av;
+}
 
 function emv(id, v) { return id + String(v.length).padStart(2, '0') + v; }
 function crc16(s) { let c = 0xFFFF; for (let i = 0; i < s.length; i++) { c ^= s.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) { c = (c & 0x8000) ? ((c << 1) ^ 0x1021) : (c << 1); c &= 0xFFFF; } } return c.toString(16).toUpperCase().padStart(4, '0'); }
@@ -49,10 +55,13 @@ function render() {
   let h = header();
   if (st.step === 'vitrine') {
     h += '<div class="ctitle">Pegou um pãozinho?</div><div class="csub">Marque o que você levou. Leva 10 segundos.</div>';
-    h += products().map(p => '<div class="prod"><div class="ph" style="' + (p.photo ? 'background-image:url(' + p.photo + ')' : '') + '">' + (p.photo ? '' : ic('bread')) + '</div>' +
-      '<div class="grow"><b>' + esc(p.name) + '</b><div class="muted" style="font-size:13px">' + esc(p.desc || '') + '</div><div class="money" style="color:var(--brown);font-size:17px">' + money(p.price) + '</div></div>' +
-      '<div class="step"><button data-a="dec" data-id="' + esc(p.id) + '" aria-label="Menos">−</button><output>' + (st.cart[p.id] || 0) + '</output>' +
-      '<button class="plus" data-a="inc" data-id="' + esc(p.id) + '" aria-label="Mais">+</button></div></div>').join('');
+    const av = availability();
+    h += products().map(p => { const left = av ? av[p.id] : null; const inCart = st.cart[p.id] || 0; const off = left === 0 && !inCart;
+      return '<div class="prod' + (off ? ' off' : '') + '"><div class="ph" style="' + (p.photo ? 'background-image:url(' + p.photo + ')' : '') + '">' + (p.photo ? '' : ic('bread')) + '</div>' +
+      '<div class="grow"><b>' + esc(p.name) + '</b><div class="muted" style="font-size:13px">' + esc(p.desc || '') + '</div><div class="money" style="color:var(--brown);font-size:17px">' + money(p.price) + '</div>' +
+      (left === null ? '' : off ? '<span class="soldout">Esgotado hoje</span>' : '<span class="left">Restam ' + left + '</span>') + '</div>' +
+      (off ? '' : '<div class="step"><button data-a="dec" data-id="' + esc(p.id) + '" aria-label="Menos">−</button><output>' + inCart + '</output>' +
+      '<button class="plus" data-a="inc" data-id="' + esc(p.id) + '" aria-label="Mais"' + (left !== null && inCart >= left ? ' disabled' : '') + '>+</button></div>') + '</div>'; }).join('');
     h += '</div><div class="cbar"><button class="btn btn-dark btn-block" data-a="next"' + (qty ? '' : ' style="opacity:.5"') + '><span>' + (qty ? qty + (qty > 1 ? ' itens · ' : ' item · ') + money(total) : 'Escolha o que pegou') + '</span>' + (qty ? '<span style="margin-left:auto">Continuar</span>' : '') + '</button></div>';
   } else if (st.step === 'dados') {
     h += '<button class="cback" data-a="back">' + ic('back') + 'Voltar</button><div class="ctitle">Quase lá!</div>';
@@ -95,12 +104,13 @@ function send(status) {
     status, paidAt: status === 'pago' ? k : null, by: 'Cliente (QR)', source: 'cliente', selfReported: status === 'pago' };
   st.sending = true; render();
   const go = () => FB.setDoc(FB.doc(fs, 'sales', sale.id), sale).then(() => {
+    if (stock && stock.date === k) { const upd = {}; Object.keys(items).forEach(id => { upd['sold.' + id] = FB.increment(items[id]); }); FB.updateDoc(FB.doc(fs, 'public', 'stock'), upd).catch(() => {}); }
     st.sending = false; st.last = sale; st.cart = {}; st.step = 'ok'; render(); scrollTo(0, 0);
   }).catch(e => { st.sending = false; render(); toast('Não foi possível enviar. Confira a internet e tente de novo.'); console.error(e); });
   if (auth.currentUser) go(); else FB.signInAnonymously(auth).then(go).catch(e => { st.sending = false; render(); toast('Sem conexão. Tente de novo.'); console.error(e); });
 }
 const A = {
-  inc(d) { st.cart[d.id] = (st.cart[d.id] || 0) + 1; render(); },
+  inc(d) { const av = availability(); if (av && (st.cart[d.id] || 0) >= av[d.id]) { toast('Só restam ' + av[d.id]); return; } st.cart[d.id] = (st.cart[d.id] || 0) + 1; render(); },
   dec(d) { st.cart[d.id] = Math.max(0, (st.cart[d.id] || 0) - 1); render(); },
   next() { if (!itemsQty(st.cart)) { toast('Marque o que você pegou'); return; } st.step = 'dados'; render(); scrollTo(0, 0); },
   back() { if (st.step === 'pix') st.step = 'dados'; else { saveFields(); st.step = 'vitrine'; } render(); scrollTo(0, 0); },
@@ -122,6 +132,11 @@ try {
   fs = FB.initializeFirestore(app, { localCache: FB.memoryLocalCache() });
   FB.onSnapshot(FB.doc(fs, 'public', 'catalog'), d => { catalog = d.exists() ? d.data() : { products: [] }; ready = true; render(); },
     e => { ready = true; catalog = { products: [] }; render(); console.error(e); });
+  FB.onSnapshot(FB.doc(fs, 'public', 'stock'), d => {
+    stock = d.exists() ? d.data() : null;
+    const av = availability(); if (av && st.step === 'vitrine') Object.keys(st.cart).forEach(id => { if (st.cart[id] > av[id]) st.cart[id] = av[id]; });
+    if (ready) render();
+  }, e => console.error(e));
   FB.signInAnonymously(auth).catch(e => console.error(e));
 } catch (e) { console.error(e); ready = true; catalog = { products: [] }; }
 render();

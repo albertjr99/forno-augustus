@@ -253,3 +253,9 @@ svg.i.flip{transform:rotate(180deg)}
 .simbar{padding-top:calc(8px + var(--sat))}
 .cpage{padding-bottom:calc(120px + var(--sab))}
 .cbar{padding-bottom:calc(18px + var(--sab))}
+
+/* ---------- estoque ---------- */
+.prod.off{opacity:.5;filter:grayscale(1);box-shadow:none;background:#F3ECE0}
+.soldout{display:inline-block;margin-top:4px;font-size:12px;font-weight:800;color:#6B6B6B;background:#E4E0DA;border-radius:8px;padding:3px 8px}
+.left{display:inline-block;margin-top:4px;font-size:12px;font-weight:800;color:var(--paid);background:var(--paidbg);border-radius:8px;padding:3px 8px}
+.step button[disabled]{opacity:.35}
