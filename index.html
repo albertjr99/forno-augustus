@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B1208">
+<title>Forno Augustus · Pegou? Marque aqui</title>
+<meta name="description" content="Pães caseiros da Talita. Marque o que você pegou e pague no Pix.">
+<meta property="og:title" content="Forno Augustus · Pães caseiros da Talita">
+<meta property="og:description" content="Pegou um pãozinho? Marque aqui e pague no Pix.">
+<meta property="og:image" content="img/icon-192.png">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+<style>
+body{max-width:560px;margin:0 auto;min-height:100vh}
+.cbar{max-width:560px;margin:0 auto}
+.chero{padding-top:calc(22px + env(safe-area-inset-top,0px))}
+.loading{min-height:60vh;display:grid;place-items:center;color:var(--muted);font-weight:700}
+.btn[disabled]{opacity:.6}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Carregando…</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script src="firebase.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
