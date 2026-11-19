@@ -268,3 +268,34 @@ svg.i.flip{transform:rotate(180deg)}
 .lockcard{cursor:pointer}
 .lockwarn{display:flex;gap:10px;align-items:flex-start;margin-top:12px;background:#FFF1D6;color:#7A4E00;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600}
 .lockwarn svg.i{width:18px;height:18px;flex:none;margin-top:1px}
+
+/* ---------- v0.7: menu, diálogo, desfazer ---------- */
+.menugroup{background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.menuitem{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:transparent;padding:14px 16px;color:var(--ink);border-bottom:1px solid #F1E6D2}
+.menugroup .menuitem:last-child{border-bottom:0}
+.page > .menuitem{background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow)}
+.menuitem b{display:block;font-size:16px;font-weight:800}
+.menuitem small{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-top:1px}
+.menuitem > svg.i{color:#B79B82;width:20px;height:20px}
+.menu-ic{width:44px;height:44px;border-radius:13px;background:var(--flour);color:var(--brown);display:grid;place-items:center;flex:none;border:1px solid var(--line)}
+.backlink{display:inline-flex;align-items:center;gap:2px;align-self:flex-start;height:40px;padding:0 14px 0 8px;border-radius:20px;border:0;background:var(--paper);color:var(--brown);font-weight:800;font-size:14px;box-shadow:var(--shadow)}
+.backlink svg.i{width:18px;height:18px}
+.iconbtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;flex:none;color:var(--brown)}
+.iconbtn svg.i{width:19px;height:19px}
+.iconbtn.ok{color:var(--paid)}
+.iconbtn.del{color:var(--owe)}
+.hint svg.i{width:14px;height:14px;vertical-align:-2px}
+.btn-danger{background:var(--owe);color:#fff}
+.btn-ghost.danger{color:var(--owe)}
+#dialog-root .dlg-bg{position:fixed;inset:0;z-index:70;background:rgba(43,18,8,.55);animation:fade .15s}
+#dialog-root .dlg{position:fixed;left:20px;right:20px;top:50%;transform:translateY(-50%);z-index:71;background:var(--flour);border-radius:24px;padding:22px 20px 18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);animation:pop .25s cubic-bezier(.2,1.2,.4,1)}
+#dialog-root .dlg h3{font-family:Display,Georgia,serif;font-size:23px;color:var(--brown);letter-spacing:-.01em;margin:0 0 8px}
+#dialog-root .dlg p{font-size:15px;color:var(--muted);line-height:1.45;margin:0 0 18px}
+#undo{position:fixed;left:16px;right:16px;bottom:calc(92px + var(--sab));z-index:65;display:flex;align-items:center;gap:12px;background:var(--oven);color:var(--flour);border-radius:16px;padding:12px 12px 12px 18px;font-weight:700;font-size:14px;box-shadow:0 16px 30px -12px rgba(0,0,0,.6);transform:translateY(20px);opacity:0;pointer-events:none;transition:.25s}
+#undo.show{transform:none;opacity:1;pointer-events:auto}
+#undo span{flex:1}
+#undo button{height:40px;padding:0 16px;border-radius:12px;border:0;background:var(--ember);color:var(--oven);font-weight:800}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 6px;border-bottom:1px solid #F1E6D2}
+.cardhead h3{margin:0;font-size:16px;font-weight:800}
+.cardhead span{font-size:13px;font-weight:700;color:var(--muted)}
+svg.i.chev{width:18px;height:18px;color:#B79B82;margin-left:-4px}
